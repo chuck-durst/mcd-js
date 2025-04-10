@@ -13,6 +13,9 @@ window.fsAttributes.push([
     console.log('🔧 Working with filter instance:', filterInstance);
     console.log('📝 Items in list:', filterInstance.listInstance.items.length);
     
+    // Log available methods on filterInstance for debugging
+    console.log('Available methods on filterInstance:', Object.getOwnPropertyNames(Object.getPrototypeOf(filterInstance)));
+    
     // Function to add the custom date filter
     const addDateFilter = (type) => {
       console.log(`🗓️ Applying ${type} date filter`);
@@ -32,7 +35,7 @@ window.fsAttributes.push([
       today.setHours(0, 0, 0, 0);
       console.log('📅 Today date (normalized):', today);
       
-      // Filter the items
+      // Process all items and apply custom properties
       console.log('🔄 Processing items for date comparison...');
       let processedCount = 0;
       let matchingItems = 0;
@@ -45,7 +48,7 @@ window.fsAttributes.push([
           return;
         }
         
-        // Parse the date (adjust the format according to your CMS date display)
+        // Parse the date
         const eventDateString = eventDateElement.textContent.trim();
         const eventDate = new Date(eventDateString);
         eventDate.setHours(0, 0, 0, 0);
@@ -59,33 +62,30 @@ window.fsAttributes.push([
         }
         
         // Set the property we'll filter on
+        let isMatching = false;
         if (type === 'upcoming') {
           // For upcoming events: dates >= today
-          const isUpcoming = eventDate >= today;
-          item.props.eventTiming = isUpcoming ? 'upcoming' : '';
-          if (isUpcoming) matchingItems++;
-          console.log(`   Item #${index}: ${isUpcoming ? '✅ UPCOMING' : '❌ NOT UPCOMING'}`);
+          isMatching = eventDate >= today;
+          console.log(`   Item #${index}: ${isMatching ? '✅ UPCOMING' : '❌ NOT UPCOMING'}`);
         } else if (type === 'past') {
           // For past events: dates < today
-          const isPast = eventDate < today;
-          item.props.eventTiming = isPast ? 'past' : '';
-          if (isPast) matchingItems++;
-          console.log(`   Item #${index}: ${isPast ? '✅ PAST' : '❌ NOT PAST'}`);
+          isMatching = eventDate < today;
+          console.log(`   Item #${index}: ${isMatching ? '✅ PAST' : '❌ NOT PAST'}`);
+        }
+        
+        // This is the key difference: manually change the item's display state
+        if (!isMatching) {
+          item.hide();
+        } else {
+          item.show();
+          matchingItems++;
         }
         
         processedCount++;
       });
       
       console.log(`✅ Processed ${processedCount} items, ${matchingItems} match the "${type}" filter`);
-      
-      // Apply the filter
-      console.log(`🔍 Adding filter: eventTiming = ${type}`);
-      filterInstance.addFilters({
-        filterKeys: ['eventTiming'],
-        values: [type]
-      });
-      
-      console.log('🔄 Filter applied, rendering results...');
+      console.log('🔄 Filter applied manually by showing/hiding items');
     };
     
     // Add event listeners to the filter buttons
@@ -117,7 +117,12 @@ window.fsAttributes.push([
       console.log('🔘 Found all button, adding event listener');
       allButton.addEventListener('click', () => {
         console.log('👆 All button clicked');
-        addDateFilter('all');
+        // For "all" we need to show all items
+        filterInstance.listInstance.items.forEach(item => {
+          item.show();
+        });
+        // Make sure to reset any existing filters
+        filterInstance.resetFilters();
       });
     } else {
       console.warn('⚠️ All button not found (#all-events-button)');
@@ -134,11 +139,6 @@ window.fsAttributes.push([
     } else {
       console.log('ℹ️ Timing select not found (#event-timing-select) - assuming you are using buttons');
     }
-    
-    // Listen for render events to confirm filtering worked
-    filterInstance.listInstance.on('renderitems', (renderedItems) => {
-      console.log(`🎯 Rendered ${renderedItems.length} items after filtering`);
-    });
     
     console.log('🚀 Date filter setup complete!');
   },
