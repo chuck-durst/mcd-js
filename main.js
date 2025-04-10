@@ -1,37 +1,56 @@
 // Add this code to your page's custom code section
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM fully loaded, initializing event filters');
     // Make sure Attributes library is loaded
     if (typeof $attributes !== 'undefined') {
+      console.log('$attributes library detected');
       // Register a custom filter function
       $attributes.filters.addFilterFunction('eventTiming', function(item, filter) {
+        console.log('Filter function called with filter:', filter);
+        console.log('Processing item:', item);
+        
         // Get the event date from the item
         // Note: Update the selector to match your CMS date field
         const eventDateElement = item.querySelector('.event-date-field');
-        if (!eventDateElement) return true; // If no date field found, show the item
+        if (!eventDateElement) {
+          console.log('No date element found, showing item by default');
+          return true; // If no date field found, show the item
+        }
         
         // Parse the date from your element (adjust format as needed)
         const eventDateString = eventDateElement.textContent.trim();
+        console.log('Event date string:', eventDateString);
+        
         const eventDate = new Date(eventDateString);
         const today = new Date();
+        console.log('Parsed event date:', eventDate);
+        console.log('Today:', today);
         
         // Set time to 00:00:00 for both dates to compare just the dates
         today.setHours(0, 0, 0, 0);
         eventDate.setHours(0, 0, 0, 0);
+        console.log('Normalized dates - Event:', eventDate, 'Today:', today);
         
         if (filter === 'upcoming') {
           // Show items with dates >= today
-          return eventDate >= today;
+          const result = eventDate >= today;
+          console.log('Upcoming filter applied, show item?', result);
+          return result;
         } else if (filter === 'past') {
           // Show items with dates < today
-          return eventDate < today;
+          const result = eventDate < today;
+          console.log('Past filter applied, show item?', result);
+          return result;
         } else {
           // If filter is 'all' or undefined, show everything
+          console.log('No specific filter or "all" filter, showing item');
           return true;
         }
       });
       
       // Initialize when Attributes is ready
       document.addEventListener('attributes:ready', function() {
+        console.log('Attributes system ready, setting up UI controls');
         // Now connect your UI controls to this filter
         
         // Option 1: If using toggle buttons
@@ -74,5 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
           });
         }
       });
+    } else {
+      console.error('$attributes library not found! Event filtering will not work.');
     }
   });
